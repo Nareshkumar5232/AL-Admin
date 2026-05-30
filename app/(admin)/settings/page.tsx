@@ -55,8 +55,9 @@ export default function SettingsPage() {
 
   // Store form state (mock saving)
   const [storeName, setStoreName] = useState('AL HIKMATH ENTERPRISES PVT LTD');
-  const [storeAddress, setStoreAddress] = useState('42, Industrial Zone, Bangalore, Karnataka - 560002');
-  const [storePhone, setStorePhone] = useState('+91 80 4567 8901');
+  const [storeAddress, setStoreAddress] = useState('No.16/127, Inbharajapuram 1st Street, Bajanai Kovil Street, Choolaimedu - 600094');
+  const [storePhone, setStorePhone] = useState('+91 9342698344');
+  const [storePhone2, setStorePhone2] = useState('+91 9342798344');
   const [storeTaxInfo, setStoreTaxInfo] = useState('GSTIN29AAAAA1111A1Z1');
 
   // Notifications state
@@ -403,11 +404,21 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] uppercase font-bold text-gray-400">HQ phone line</label>
+                      <label className="text-[10px] uppercase font-bold text-gray-400">HQ phone line 1</label>
                       <input
                         type="text"
                         value={storePhone}
                         onChange={(e) => setStorePhone(e.target.value)}
+                        className="admin-input"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase font-bold text-gray-400">HQ phone line 2</label>
+                      <input
+                        type="text"
+                        value={storePhone2}
+                        onChange={(e) => setStorePhone2(e.target.value)}
                         className="admin-input"
                       />
                     </div>

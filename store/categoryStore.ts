@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Category, ProductCategory } from '@/types';
-import { mockCategories } from '@/data/mock-categories';
 
 interface CategoryState {
   categories: Category[];
@@ -10,7 +9,7 @@ interface CategoryState {
 }
 
 export const useCategoryStore = create<CategoryState>()((set) => ({
-  categories: mockCategories,
+  categories: [],
   
   addCategory: (categoryData: Partial<Category>) =>
     set((state) => {
@@ -20,7 +19,7 @@ export const useCategoryStore = create<CategoryState>()((set) => ({
         slug: (categoryData.slug || 'electronics') as ProductCategory,
         description: categoryData.description || '',
         productCount: 0,
-        icon: categoryData.icon || 'Box',
+        icon: categoryData.icon || 'Package',
         color: categoryData.color || '#9EFF00',
       };
       return { categories: [...state.categories, newCategory] };

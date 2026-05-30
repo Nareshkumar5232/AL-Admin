@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { useSidebarStore } from "@/store/sidebarStore";
@@ -27,7 +28,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-[#9EFF00] border-t-transparent animate-spin" />
+          <Image
+            src="/log.png"
+            alt="AL HIKMATH Loading"
+            width={80}
+            height={80}
+            className="opacity-70 animate-pulse"
+            priority
+          />
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
         </div>
       </div>

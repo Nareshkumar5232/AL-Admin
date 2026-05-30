@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/lib/validations';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Lock, Mail, ShieldAlert, Zap } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ShieldAlert } from 'lucide-react';
 import { z } from 'zod';
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -75,9 +76,16 @@ export default function LoginPage() {
       >
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8 text-center">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-black border border-[#9EFF00]/30 shadow-lg shadow-[#9EFF00]/5 mb-4 relative group">
+          <div className="w-24 h-24 rounded-2xl flex items-center justify-center bg-black border border-[#9EFF00]/30 shadow-lg shadow-[#9EFF00]/5 mb-4 relative group overflow-hidden">
             <div className="absolute inset-0 rounded-2xl bg-[#9EFF00]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
-            <Zap size={28} className="text-[#9EFF00] animate-pulse-glow" />
+            <Image
+              src="/log.png"
+              alt="AL HIKMATH Logo"
+              width={96}
+              height={96}
+              className="relative z-10 w-20 h-20 object-contain"
+              priority
+            />
           </div>
           <h2 className="text-xl font-bold tracking-widest text-white uppercase">
             AL HIKMATH

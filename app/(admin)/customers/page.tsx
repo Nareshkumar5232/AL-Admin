@@ -6,13 +6,14 @@ import DataTable from '@/components/shared/DataTable';
 import EmptyState from '@/components/shared/EmptyState';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CustomerDetailModal from '@/components/customers/CustomerDetailModal';
-import { mockCustomers } from '@/data/mock-customers';
+import { useCustomerStore } from '@/store/customerStore';
 import { useOrderStore } from '@/store/orderStore';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Customer } from '@/types';
 import { Search, Eye, RotateCcw } from 'lucide-react';
 
 export default function CustomersPage() {
+  const { customers } = useCustomerStore();
   const { orders } = useOrderStore();
 
   // Search & Filters state
@@ -35,7 +36,7 @@ export default function CustomersPage() {
 
   // Filtered and Sorted Customers
   const filteredCustomers = useMemo(() => {
-    let result = [...mockCustomers];
+    let result = [...customers];
 
     // Search filter
     if (searchQuery.trim()) {
@@ -72,7 +73,7 @@ export default function CustomersPage() {
     }
 
     return result;
-  }, [searchQuery, statusFilter, sortBy]);
+  }, [customers, searchQuery, statusFilter, sortBy]);
 
   // Paginated Customers
   const paginatedCustomers = useMemo(() => {

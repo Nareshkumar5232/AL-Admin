@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
+import { Menu, Moon, Search, Sun } from "lucide-react";
 import { useSidebarStore } from "@/store/sidebarStore";
 import { useThemeStore } from "@/store/themeStore";
 import { useAuthStore } from "@/store/authStore";
@@ -15,7 +15,6 @@ export function Navbar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -86,55 +85,10 @@ export function Navbar() {
           </AnimatePresence>
         </motion.button>
 
-        {/* Notifications */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowNotifications(!showNotifications);
-              setShowProfileMenu(false);
-            }}
-            className="p-2.5 rounded-xl transition-colors hover:bg-[var(--bg-hover)] relative"
-          >
-            <Bell className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
-            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#9EFF00] rounded-full border-2" style={{ borderColor: 'var(--bg-secondary)' }} />
-          </button>
-
-          <AnimatePresence>
-            {showNotifications && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                className="absolute right-0 top-full mt-2 w-80 glass-card-static p-4 z-50"
-              >
-                <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>Notifications</h3>
-                <div className="space-y-3">
-                  {[
-                    { text: "New order #ORD-2024-010 received", time: "2 min ago" },
-                    { text: "Product stock low: Havells LED Bulb", time: "15 min ago" },
-                    { text: "New review pending approval", time: "1 hour ago" },
-                  ].map((n, i) => (
-                    <div key={i} className="flex items-start gap-3 p-2 rounded-lg hover:bg-[var(--bg-hover)] cursor-pointer transition-colors">
-                      <div className="w-2 h-2 rounded-full bg-[#9EFF00] mt-2 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{n.text}</p>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{n.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* Profile */}
         <div className="relative">
           <button
-            onClick={() => {
-              setShowProfileMenu(!showProfileMenu);
-              setShowNotifications(false);
-            }}
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center gap-3 p-1.5 pr-3 rounded-xl hover:bg-[var(--bg-hover)] transition-colors"
           >
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#9EFF00] to-[#00BFFF] flex items-center justify-center text-xs font-bold text-black">
@@ -179,10 +133,10 @@ export function Navbar() {
       </div>
 
       {/* Click outside to close dropdowns */}
-      {(showProfileMenu || showNotifications) && (
+      {showProfileMenu && (
         <div
           className="fixed inset-0 z-[-1]"
-          onClick={() => { setShowProfileMenu(false); setShowNotifications(false); }}
+          onClick={() => setShowProfileMenu(false)}
         />
       )}
     </header>

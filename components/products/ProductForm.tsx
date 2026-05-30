@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Product, ProductCategory } from '@/types';
-import { mockCategories } from '@/data/mock-categories';
+import { useCategoryStore } from '@/store/categoryStore';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters'),
@@ -32,6 +32,7 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ isOpen, onClose, product, onSave }: ProductFormProps) {
+  const { categories } = useCategoryStore();
   const [specs, setSpecs] = useState<{ key: string; value: string }[]>([]);
   const [imagesList, setImagesList] = useState<string[]>([]);
   const isEdit = !!product;
@@ -270,7 +271,7 @@ export default function ProductForm({ isOpen, onClose, product, onSave }: Produc
                     style={{ background: 'var(--bg-tertiary)' }}
                   >
                     <option value="">Select Category</option>
-                    {mockCategories.map((cat) => (
+                    {categories.map((cat) => (
                       <option key={cat.id} value={cat.slug}>
                         {cat.name}
                       </option>

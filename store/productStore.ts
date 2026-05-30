@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Product } from '@/types';
-import { mockProducts } from '@/data/mock-products';
 
 interface ProductState {
   products: Product[];
@@ -10,7 +9,7 @@ interface ProductState {
 }
 
 export const useProductStore = create<ProductState>()((set) => ({
-  products: mockProducts,
+  products: [],
   addProduct: (productData: Partial<Product>) =>
     set((state) => {
       const newProduct: Product = {

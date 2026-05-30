@@ -11,6 +11,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "AL HIKMATH Admin Panel",
   description: "Admin Dashboard for AL HIKMATH ENTERPRISES PVT LTD - Premium Electronics & Electrical Store",
+  icons: {
+    icon: "/log.png",
+  },
 };
 
 export default function RootLayout({

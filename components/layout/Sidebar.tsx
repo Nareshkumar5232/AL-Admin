@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,14 +10,11 @@ import {
   ShoppingCart,
   Users,
   FolderTree,
-  BarChart3,
-  MessageSquare,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
   X,
-  Zap,
 } from "lucide-react";
 import { useSidebarStore } from "@/store/sidebarStore";
 import { useAuthStore } from "@/store/authStore";
@@ -29,8 +27,6 @@ const navItems = [
   { href: "/orders", label: "Orders", icon: ShoppingCart },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/categories", label: "Categories", icon: FolderTree },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/reviews", label: "Reviews", icon: MessageSquare },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -50,8 +46,15 @@ export function Sidebar() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: 'var(--border-color)' }}>
-        <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#9EFF00] to-[#00BFFF]">
-          <Zap className="w-5 h-5 text-black" />
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
+          <Image
+            src="/log.png"
+            alt="AL HIKMATH Logo"
+            width={48}
+            height={48}
+            className="w-full h-full object-contain"
+            priority
+          />
         </div>
         <AnimatePresence>
           {(!isCollapsed || isMobile) && (

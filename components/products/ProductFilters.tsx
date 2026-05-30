@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Search, SlidersHorizontal, RotateCcw } from 'lucide-react';
-import { mockCategories } from '@/data/mock-categories';
+import { useCategoryStore } from '@/store/categoryStore';
 
 interface ProductFiltersProps {
   searchQuery: string;
@@ -25,6 +25,8 @@ export default function ProductFilters({
   sortBy,
   setSortBy,
 }: ProductFiltersProps) {
+  const { categories } = useCategoryStore();
+
   const handleReset = () => {
     setSearchQuery('');
     setCategory('');
@@ -61,7 +63,7 @@ export default function ProductFilters({
           style={{ background: 'var(--bg-tertiary)' }}
         >
           <option value="">Categories</option>
-          {mockCategories.map((cat) => (
+          {categories.map((cat) => (
             <option key={cat.id} value={cat.slug}>
               {cat.name}
             </option>
