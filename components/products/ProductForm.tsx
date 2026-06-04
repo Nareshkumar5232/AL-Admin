@@ -29,9 +29,10 @@ interface ProductFormProps {
   onClose: () => void;
   product?: Product | null;
   onSave: (productData: Partial<Product>) => void;
+  isSaving?: boolean;
 }
 
-export default function ProductForm({ isOpen, onClose, product, onSave }: ProductFormProps) {
+export default function ProductForm({ isOpen, onClose, product, onSave, isSaving }: ProductFormProps) {
   const { categories } = useCategoryStore();
   const [specs, setSpecs] = useState<{ key: string; value: string }[]>([]);
   const [imagesList, setImagesList] = useState<string[]>([]);
@@ -470,9 +471,10 @@ export default function ProductForm({ isOpen, onClose, product, onSave }: Produc
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-lg text-xs uppercase font-bold tracking-wider text-black bg-[#9EFF00] hover:bg-[#9EFF00]/90 active:scale-95 transition-all shadow-md cursor-pointer"
+                  disabled={isSaving}
+                  className="px-4 py-2.5 rounded-lg text-xs uppercase font-bold tracking-wider text-black bg-[#9EFF00] hover:bg-[#9EFF00]/90 active:scale-95 transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isEdit ? 'Sync Changes' : 'Publish Entry'}
+                  {isSaving ? 'Processing...' : isEdit ? 'Sync Changes' : 'Publish Entry'}
                 </button>
               </div>
             </form>

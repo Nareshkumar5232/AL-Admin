@@ -13,6 +13,7 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'info';
+  isConfirming?: boolean;
 }
 
 export default function ConfirmDialog({
@@ -24,6 +25,7 @@ export default function ConfirmDialog({
   confirmText = "Confirm",
   cancelText = "Cancel",
   variant = "danger",
+  isConfirming = false,
 }: ConfirmDialogProps) {
   // Prevent body scroll when open
   useEffect(() => {
@@ -112,13 +114,14 @@ export default function ConfirmDialog({
               </button>
               <button
                 type="button"
+                disabled={isConfirming}
                 onClick={() => {
                   onConfirm();
                   onClose();
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-md active:scale-95 ${getConfirmButtonStyles()}`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${getConfirmButtonStyles()}`}
               >
-                {confirmText}
+                {isConfirming ? 'Processing...' : confirmText}
               </button>
             </div>
           </motion.div>

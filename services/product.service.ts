@@ -17,28 +17,32 @@ export const productService = {
     if (filters?.search) params.append('search', filters.search);
 
     const query = params.toString();
-    const endpoint = query ? `/products?${query}` : '/products';
-    return apiService.get<Product[]>(endpoint);
+    const endpoint = query ? `/admin/products?${query}` : '/admin/products';
+    const response = await apiService.get<{ products: any[], total: number, pages: number, currentPage: number }>(endpoint);
+    return (response.products || []).map(p => ({ ...p, id: p._id || p.id }));
   },
 
   // GET /api/products/:id
   async getProduct(id: string): Promise<Product> {
-    return apiService.get<Product>(`/products/${id}`);
+    const product = await apiService.get<any>(`/admin/products/${id}`);
+    return { ...product, id: product._id || product.id };
   },
 
   // POST /api/products
   async createProduct(productData: Partial<Product>): Promise<Product> {
-    return apiService.post<Product>('/products', productData);
+    const product = await apiService.post<any>('/admin/products', productData);
+    return { ...product, id: product._id || product.id };
   },
 
   // PUT /api/products/:id
   async updateProduct(id: string, productData: Partial<Product>): Promise<Product> {
-    return apiService.put<Product>(`/products/${id}`, productData);
+    const product = await apiService.put<any>(`/admin/products/${id}`, productData);
+    return { ...product, id: product._id || product.id };
   },
 
   // DELETE /api/products/:id
   async deleteProduct(id: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/products/${id}`);
+    return apiService.delete(`/admin/products/${id}`);
   },
 
   // POST /api/products/upload-images
@@ -51,7 +55,7 @@ export const productService = {
     files.forEach((file) => formData.append('files', file));
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/products/upload-images`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'https://al-kimath-backend.onrender.com/api'}/admin/products/upload-images`,
       {
         method: 'POST',
         body: formData,
@@ -67,6 +71,6 @@ export const productService = {
 
   // DELETE /api/products/image/:imageId
   async deleteProductImage(imageId: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/products/image/${imageId}`);
+    return apiService.delete(`/admin/products/image/${imageId}`);
   },
 };

@@ -9,14 +9,13 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import ProductForm from '@/components/products/ProductForm';
 import ProductFilters from '@/components/products/ProductFilters';
-import { useProductStore } from '@/store/productStore';
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts';
 import { formatCurrency, getCategoryLabel } from '@/lib/utils';
 import { Plus, Edit, Trash2, Box, Package, ShieldCheck } from 'lucide-react';
 import { Product } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProductsPage() {
-  const { products, addProduct, updateProduct, deleteProduct } = useProductStore();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -25,6 +24,18 @@ export default function ProductsPage() {
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+
+  // Fetch Data
+  const { data: products = [], isLoading } = useProducts({
+    category: category || undefined,
+    status: status || undefined,
+    search: searchQuery || undefined,
+  });
+
+  // Mutations
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -123,21 +134,31 @@ export default function ProductsPage() {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   // Handlers
-  const handleSaveProduct = (productData: Partial<Product>) => {
-    if (editingProduct) {
-      updateProduct(editingProduct.id, productData);
-      showToast(`Product "${productData.name}" updated successfully.`);
-    } else {
-      addProduct(productData);
-      showToast(`Product "${productData.name}" provisioned successfully.`);
+  const handleSaveProduct = async (productData: Partial<Product>) => {
+    try {
+      if (editingProduct) {
+        await updateProductMutation.mutateAsync({ id: editingProduct.id, data: productData });
+        showToast(`Product "${productData.name}" updated successfully.`);
+      } else {
+        await createProductMutation.mutateAsync(productData);
+        showToast(`Product "${productData.name}" provisioned successfully.`);
+      }
+      setIsFormOpen(false);
+      setEditingProduct(null);
+    } catch (error) {
+      showToast('Operation failed. Please try again.', 'error');
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deleteTargetId) {
       const prod = products.find((p) => p.id === deleteTargetId);
-      deleteProduct(deleteTargetId);
-      showToast(`Product "${prod?.name}" deleted from systems.`, 'success');
+      try {
+        await deleteProductMutation.mutateAsync(deleteTargetId);
+        showToast(`Product "${prod?.name}" deleted from systems.`, 'success');
+      } catch (error) {
+        showToast('Delete operation failed.', 'error');
+      }
       setDeleteTargetId(null);
     }
   };
@@ -205,7 +226,7 @@ export default function ProductsPage() {
       <DataTable
         data={paginatedProducts}
         columns={columns}
-        isLoading={false}
+        isLoading={isLoading}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
@@ -325,6 +346,7 @@ export default function ProductsPage() {
         }}
         product={editingProduct}
         onSave={handleSaveProduct}
+        isSaving={createProductMutation.isPending || updateProductMutation.isPending}
       />
 
       {/* Delete Confirmation */}
@@ -332,8 +354,9 @@ export default function ProductsPage() {
         isOpen={!!deleteTargetId}
         onClose={() => setDeleteTargetId(null)}
         onConfirm={handleDeleteConfirm}
+        isConfirming={deleteProductMutation.isPending}
         title="Purge Catalog Item"
-        description="Are you absolutely sure you want to purge this inventory entry? This action is irreversible and will delete it from mock databases."
+        description="Are you absolutely sure you want to purge this inventory entry? This action is irreversible and will delete it from the live database."
         confirmText="Purge Record"
         cancelText="Cancel"
       />

@@ -3,12 +3,12 @@
 import React from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import DashboardCards from '@/components/dashboard/DashboardCards';
-import { useProductStore } from '@/store/productStore';
+import { useProducts } from '@/hooks/useProducts';
 import { useOrderStore } from '@/store/orderStore';
 import { useCustomerStore } from '@/store/customerStore';
 
 export default function DashboardPage() {
-  const { products } = useProductStore();
+  const { data: products = [] } = useProducts();
   const { orders } = useOrderStore();
   const { customers } = useCustomerStore();
 
