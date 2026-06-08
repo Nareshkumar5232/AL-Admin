@@ -5,28 +5,29 @@ import { apiService } from './api';
 import { Category } from '@/types';
 
 export const categoryService = {
-  // GET /api/categories
-  async getCategories(): Promise<Category[]> {
-    return apiService.get<Category[]>('/categories');
+  // GET /api/admin/categories
+  async getCategories(search?: string): Promise<Category[]> {
+    const query = search ? `?search=${search}` : '';
+    return apiService.get<Category[]>(`/admin/categories${query}`);
   },
 
-  // GET /api/categories/:id
+  // GET /api/admin/categories/:id
   async getCategory(id: string): Promise<Category> {
-    return apiService.get<Category>(`/categories/${id}`);
+    return apiService.get<Category>(`/admin/categories/${id}`);
   },
 
-  // POST /api/categories
+  // POST /api/admin/categories
   async createCategory(categoryData: Partial<Category>): Promise<Category> {
-    return apiService.post<Category>('/categories', categoryData);
+    return apiService.post<Category>('/admin/categories', categoryData);
   },
 
-  // PUT /api/categories/:id
+  // PUT /api/admin/categories/:id
   async updateCategory(id: string, categoryData: Partial<Category>): Promise<Category> {
-    return apiService.put<Category>(`/categories/${id}`, categoryData);
+    return apiService.put<Category>(`/admin/categories/${id}`, categoryData);
   },
 
-  // DELETE /api/categories/:id
+  // DELETE /api/admin/categories/:id
   async deleteCategory(id: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/categories/${id}`);
+    return apiService.delete(`/admin/categories/${id}`);
   },
 };

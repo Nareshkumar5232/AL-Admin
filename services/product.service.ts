@@ -69,8 +69,8 @@ export const productService = {
     return response.json();
   },
 
-  // DELETE /api/products/image/:imageId
-  async deleteProductImage(imageId: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/admin/products/image/${imageId}`);
+  // DELETE /api/admin/products/:productId/image/:imageId
+  async deleteProductImage(productId: string, imageId: string): Promise<{ success: boolean }> {
+    return apiService.delete(`/admin/products/${productId}/image/${imageId}`);
   },
 };

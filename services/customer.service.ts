@@ -5,7 +5,7 @@ import { apiService } from './api';
 import { Customer, CustomerStatus } from '@/types';
 
 export const customerService = {
-  // GET /api/customers
+  // GET /api/admin/customers
   async getCustomers(filters?: {
     status?: CustomerStatus;
     search?: string;
@@ -15,27 +15,27 @@ export const customerService = {
     if (filters?.search) params.append('search', filters.search);
 
     const query = params.toString();
-    const endpoint = query ? `/customers?${query}` : '/customers';
+    const endpoint = query ? `/admin/customers?${query}` : '/admin/customers';
     return apiService.get<Customer[]>(endpoint);
   },
 
-  // GET /api/customers/:id
+  // GET /api/admin/customers/:id
   async getCustomer(id: string): Promise<Customer> {
-    return apiService.get<Customer>(`/customers/${id}`);
+    return apiService.get<Customer>(`/admin/customers/${id}`);
   },
 
-  // POST /api/customers
+  // POST /api/admin/customers
   async createCustomer(customerData: Partial<Customer>): Promise<Customer> {
-    return apiService.post<Customer>('/customers', customerData);
+    return apiService.post<Customer>('/admin/customers', customerData);
   },
 
-  // PUT /api/customers/:id
+  // PUT /api/admin/customers/:id
   async updateCustomer(id: string, customerData: Partial<Customer>): Promise<Customer> {
-    return apiService.put<Customer>(`/customers/${id}`, customerData);
+    return apiService.put<Customer>(`/admin/customers/${id}`, customerData);
   },
 
-  // DELETE /api/customers/:id
+  // DELETE /api/admin/customers/:id
   async deleteCustomer(id: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/customers/${id}`);
+    return apiService.delete(`/admin/customers/${id}`);
   },
 };

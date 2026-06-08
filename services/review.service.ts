@@ -5,7 +5,7 @@ import { apiService } from './api';
 import { Review, ReviewStatus } from '@/types';
 
 export const reviewService = {
-  // GET /api/reviews
+  // GET /api/admin/reviews
   async getReviews(filters?: {
     status?: ReviewStatus;
     productId?: string;
@@ -15,27 +15,27 @@ export const reviewService = {
     if (filters?.productId) params.append('productId', filters.productId);
 
     const query = params.toString();
-    const endpoint = query ? `/reviews?${query}` : '/reviews';
+    const endpoint = query ? `/admin/reviews?${query}` : '/admin/reviews';
     return apiService.get<Review[]>(endpoint);
   },
 
-  // GET /api/reviews/:id
+  // GET /api/admin/reviews/:id
   async getReview(id: string): Promise<Review> {
-    return apiService.get<Review>(`/reviews/${id}`);
+    return apiService.get<Review>(`/admin/reviews/${id}`);
   },
 
-  // PUT /api/reviews/:id/status
+  // PUT /api/admin/reviews/:id/status
   async updateReviewStatus(id: string, status: ReviewStatus): Promise<Review> {
-    return apiService.put<Review>(`/reviews/${id}`, { status });
+    return apiService.put<Review>(`/admin/reviews/${id}`, { status });
   },
 
-  // PUT /api/reviews/:id
+  // PUT /api/admin/reviews/:id
   async updateReview(id: string, reviewData: Partial<Review>): Promise<Review> {
-    return apiService.put<Review>(`/reviews/${id}`, reviewData);
+    return apiService.put<Review>(`/admin/reviews/${id}`, reviewData);
   },
 
-  // DELETE /api/reviews/:id
+  // DELETE /api/admin/reviews/:id
   async deleteReview(id: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/reviews/${id}`);
+    return apiService.delete(`/admin/reviews/${id}`);
   },
 };
