@@ -25,9 +25,14 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       login: async (email: string, password: string) => {
         try {
-          const response = await authService.login(email, password);
-          if (response.token && response.user) {
-            set({ user: response.user, isAuthenticated: true });
+          const response: any = await authService.login(email, password);
+          console.log('Login backend response:', response); // For debugging
+          
+          if (response && response.token) {
+            // Backend might return user, admin, data.user, etc.
+            const userObj = response.user || response.admin || (response.data && response.data.user) || DEMO_USER;
+            
+            set({ user: userObj, isAuthenticated: true });
             return true;
           }
           return false;
