@@ -46,7 +46,7 @@ export default function LoginPage() {
     // Simulate minor network delay for premium feel (cyber security check)
     await new Promise((resolve) => setTimeout(resolve, 1200));
 
-    const success = login(data.email, data.password);
+    const success = await login(data.email, data.password);
     
     if (success) {
       router.replace('/dashboard');

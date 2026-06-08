@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AdminUser } from '@/types';
+import { authService } from '@/services/auth.service';
 
 interface AuthState {
   user: AdminUser | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -22,15 +23,23 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
-      login: (email: string, password: string) => {
-        if (email === 'admin@gmail.com' && password === 'admin@123') {
-          set({ user: DEMO_USER, isAuthenticated: true });
-          return true;
+      login: async (email: string, password: string) => {
+        try {
+          const response = await authService.login(email, password);
+          if (response.token && response.user) {
+            set({ user: response.user, isAuthenticated: true });
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Login error:', error);
+          return false;
         }
-        return false;
       },
       logout: () => {
         set({ user: null, isAuthenticated: false });
+        // Also clear token from API service via authService
+        authService.logout().catch(console.error);
       },
     }),
     {
