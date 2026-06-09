@@ -1,8 +1,16 @@
 // AL HIKMATH ENTERPRISES PVT LTD - Product Service
 // Handles all product-related API calls
 
-import { apiService } from './api';
+import { apiService, API_BASE_URL } from './api';
 import { Product } from '@/types';
+
+function extractProduct(payload: any): any {
+  if (!payload) return null;
+  if (payload.product && typeof payload.product === 'object') {
+    return payload.product;
+  }
+  return payload;
+}
 
 export const productService = {
   // GET /api/products
@@ -24,19 +32,22 @@ export const productService = {
 
   // GET /api/products/:id
   async getProduct(id: string): Promise<Product> {
-    const product = await apiService.get<any>(`/admin/products/${id}`);
+    const response = await apiService.get<any>(`/admin/products/${id}`);
+    const product = extractProduct(response);
     return { ...product, id: product._id || product.id };
   },
 
   // POST /api/products
   async createProduct(productData: Partial<Product>): Promise<Product> {
-    const product = await apiService.post<any>('/admin/products', productData);
+    const response = await apiService.post<any>('/admin/products', productData);
+    const product = extractProduct(response);
     return { ...product, id: product._id || product.id };
   },
 
   // PUT /api/products/:id
   async updateProduct(id: string, productData: Partial<Product>): Promise<Product> {
-    const product = await apiService.put<any>(`/admin/products/${id}`, productData);
+    const response = await apiService.put<any>(`/admin/products/${id}`, productData);
+    const product = extractProduct(response);
     return { ...product, id: product._id || product.id };
   },
 
@@ -55,7 +66,7 @@ export const productService = {
     files.forEach((file) => formData.append('files', file));
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'https://al-kimath-backend.onrender.com/api'}/admin/products/upload-images`,
+      `${API_BASE_URL}/admin/products/upload-images`,
       {
         method: 'POST',
         body: formData,
