@@ -10,7 +10,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import ProductForm from '@/components/products/ProductForm';
 import ProductFilters from '@/components/products/ProductFilters';
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts';
-import { formatCurrency, getCategoryLabel } from '@/lib/utils';
+import { formatCurrency, getCategoryLabel, getImageUrl } from '@/lib/utils';
 import { Plus, Edit, Trash2, Box, Package, ShieldCheck } from 'lucide-react';
 import { Product } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -282,7 +282,7 @@ export default function ProductsPage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                   {product.images && product.images.length > 0 && product.images[0] !== '/images/placeholder-product.svg' ? (
-                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                    <img src={getImageUrl(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
                   ) : (
                     <Box size={20} className="text-gray-400" />
                   )}

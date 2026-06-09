@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Product, ProductCategory } from '@/types';
 import { useCategoryStore } from '@/store/categoryStore';
+import { getImageUrl } from '@/lib/utils';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters'),
@@ -371,7 +372,7 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
                   {imagesList.map((img, index) => (
                     <div key={`existing-${index}`} className="w-24 h-24 rounded-xl border relative group overflow-hidden bg-white/5 flex items-center justify-center animate-scale-in" style={{ borderColor: 'var(--border-color)' }}>
                       <img 
-                        src={img} 
+                        src={getImageUrl(img)} 
                         alt={`Product ${index + 1}`} 
                         className="w-full h-full object-contain p-1"
                       />

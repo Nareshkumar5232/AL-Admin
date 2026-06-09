@@ -59,3 +59,13 @@ export function getCategoryLabel(slug: string): string {
   };
   return labels[slug] || slug;
 }
+
+export function getImageUrl(url?: string): string {
+  if (!url) return '/images/placeholder-product.svg';
+  if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+  
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://al-kimath-backend.onrender.com/api').replace(/\/api$/, '');
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  
+  return `${baseUrl}${cleanUrl}`;
+}
