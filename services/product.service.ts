@@ -1,87 +1,78 @@
 // AL HIKMATH ENTERPRISES PVT LTD - Product Service
-// Handles all product-related API calls
+// All requests go through adminApi which attaches the Bearer token automatically
 
-import { apiService, API_BASE_URL } from './api';
-import { Product } from '@/types';
+import { adminApi, API_BASE_URL, getAdminToken } from "./api";
+import type { Product } from "@/types";
 
 function extractProduct(payload: any): any {
   if (!payload) return null;
-  if (payload.product && typeof payload.product === 'object') {
-    return payload.product;
-  }
+  if (payload.product && typeof payload.product === "object") return payload.product;
   return payload;
 }
 
 export const productService = {
-  // GET /api/products
+  // GET /api/admin/products
   async getProducts(filters?: {
     category?: string;
     status?: string;
     search?: string;
+    page?: number;
+    limit?: number;
   }): Promise<Product[]> {
-    const params = new URLSearchParams();
-    if (filters?.category) params.append('category', filters.category);
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.search) params.append('search', filters.search);
+    const params: Record<string, unknown> = {};
+    if (filters?.category) params.category = filters.category;
+    if (filters?.status) params.status = filters.status;
+    if (filters?.search) params.search = filters.search;
+    if (filters?.page) params.page = filters.page;
+    if (filters?.limit) params.limit = filters.limit;
 
-    const query = params.toString();
-    const endpoint = query ? `/admin/products?${query}` : '/admin/products';
-    const response = await apiService.get<{ products: any[], total: number, pages: number, currentPage: number }>(endpoint);
-    return (response.products || []).map(p => ({ ...p, id: p._id || p.id }));
+    const response = await adminApi.get<{
+      products: any[];
+      total: number;
+      pages: number;
+      currentPage: number;
+    }>("/admin/products", params);
+
+    return (response.products || []).map((p) => ({ ...p, id: p._id || p.id }));
   },
 
-  // GET /api/products/:id
+  // GET /api/admin/products/:id
   async getProduct(id: string): Promise<Product> {
-    const response = await apiService.get<any>(`/admin/products/${id}`);
+    const response = await adminApi.get<any>(`/admin/products/${id}`);
     const product = extractProduct(response);
     return { ...product, id: product._id || product.id };
   },
 
-  // POST /api/products
+  // POST /api/admin/products
   async createProduct(productData: Partial<Product>): Promise<Product> {
-    const response = await apiService.post<any>('/admin/products', productData);
+    const response = await adminApi.post<any>("/admin/products", productData);
     const product = extractProduct(response);
     return { ...product, id: product._id || product.id };
   },
 
-  // PUT /api/products/:id
+  // PUT /api/admin/products/:id
   async updateProduct(id: string, productData: Partial<Product>): Promise<Product> {
-    const response = await apiService.put<any>(`/admin/products/${id}`, productData);
+    const response = await adminApi.put<any>(`/admin/products/${id}`, productData);
     const product = extractProduct(response);
     return { ...product, id: product._id || product.id };
   },
 
-  // DELETE /api/products/:id
+  // DELETE /api/admin/products/:id
   async deleteProduct(id: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/admin/products/${id}`);
+    return adminApi.delete(`/admin/products/${id}`);
   },
 
-  // POST /api/products/upload-images
-  async uploadProductImages(
-    productId: string,
-    files: File[]
-  ): Promise<{ images: string[] }> {
+  // POST /api/admin/products/upload-images (multipart/form-data)
+  async uploadProductImages(productId: string, files: File[]): Promise<{ images: string[] }> {
     const formData = new FormData();
-    formData.append('productId', productId);
-    files.forEach((file) => formData.append('files', file));
-
-    const response = await fetch(
-      `${API_BASE_URL}/admin/products/upload-images`,
-      {
-        method: 'POST',
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}`,
-        },
-      }
-    );
-
-    if (!response.ok) throw new Error('Image upload failed');
-    return response.json();
+    formData.append("productId", productId);
+    files.forEach((file) => formData.append("files", file));
+    // adminApi.upload uses the axios instance — token is auto-attached by interceptor
+    return adminApi.upload<{ images: string[] }>("/admin/products/upload-images", formData);
   },
 
-  // DELETE /api/products/image/:imageId
-  async deleteProductImage(imageId: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/admin/products/image/${imageId}`);
+  // DELETE /api/admin/products/:productId/image/:imageId
+  async deleteProductImage(productId: string, imageId: string): Promise<{ success: boolean }> {
+    return adminApi.delete(`/admin/products/${productId}/image/${imageId}`);
   },
 };

@@ -1,7 +1,10 @@
 // AL HIKMATH ENTERPRISES PVT LTD - Admin Panel
-// Base API Service
-import axios, { type AxiosError, type AxiosInstance } from "axios";
+// Central API Client — ALL admin requests go through here
+// Token key: "admin_token" in localStorage
 
+import axios, { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from "axios";
+
+// ── Backend base URL ────────────────────────────────────────────────────────
 export const API_BASE_URL = buildApiBaseUrl(
   process.env.NEXT_PUBLIC_API_URL || "https://al-kimath-backend.onrender.com"
 );
@@ -11,143 +14,118 @@ function buildApiBaseUrl(baseUrl: string) {
   return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
 }
 
-// Axios Instance (Phase 2 Requirement)
+// ── Token helpers ────────────────────────────────────────────────────────────
+export const TOKEN_KEY = "admin_token";
+
+export function getAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setAdminToken(token: string): void {
+  if (typeof window === "undefined") return;
+  console.log("[AdminAuth] Token stored in localStorage:", token ? "✅ present" : "❌ missing");
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearAdminToken(): void {
+  if (typeof window === "undefined") return;
+  console.log("[AdminAuth] Token cleared from localStorage");
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+// ── Axios instance ───────────────────────────────────────────────────────────
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
+// REQUEST interceptor — attach token to every request
 apiClient.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("admin_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  const token = getAdminToken();
+  console.log(
+    `[AdminAuth] → ${config.method?.toUpperCase()} ${config.url} | Token: ${
+      token ? "✅ attached" : "❌ MISSING"
+    }`
+  );
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-
+  // Let Axios set Content-Type automatically for FormData
   if (config.data instanceof FormData && config.headers) {
     delete config.headers["Content-Type"];
   }
-
   return config;
 });
 
-export function getApiErrorMessage(error: unknown) {
+// RESPONSE interceptor — handle 401 globally
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      console.warn("[AdminAuth] 401 Unauthorized — clearing token and redirecting to login");
+      clearAdminToken();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login?reason=session_expired";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ── Error message extractor ──────────────────────────────────────────────────
+export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-    return axiosError.response?.data?.message || axiosError.response?.data?.error || axiosError.message;
+    return (
+      axiosError.response?.data?.message ||
+      axiosError.response?.data?.error ||
+      axiosError.message
+    );
   }
-
   return error instanceof Error ? error.message : "Unknown API error";
 }
 
-// Legacy fetch service (maintained for backward compatibility if used)
-interface ApiRequestOptions extends RequestInit {
-  headers?: Record<string, string>;
+// ── Generic request wrapper (uses apiClient axios instance) ──────────────────
+async function request<T>(
+  endpoint: string,
+  config: AxiosRequestConfig = {}
+): Promise<T> {
+  const response = await apiClient.request<T>({ url: endpoint, ...config });
+  return response.data;
 }
 
-class ApiService {
-  private baseUrl: string;
-  private token: string | null = null;
+// ── Convenience methods exported for all services ────────────────────────────
+export const adminApi = {
+  get: <T>(endpoint: string, params?: Record<string, unknown>) =>
+    request<T>(endpoint, { method: "GET", params }),
 
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
-    this.loadToken();
-  }
+  post: <T>(endpoint: string, data?: unknown) =>
+    request<T>(endpoint, { method: "POST", data }),
 
-  private loadToken() {
-    if (typeof window !== "undefined") {
-      this.token = localStorage.getItem("admin_token");
-    }
-  }
+  put: <T>(endpoint: string, data?: unknown) =>
+    request<T>(endpoint, { method: "PUT", data }),
 
-  private setToken(token: string) {
-    this.token = token;
-    if (typeof window !== "undefined") {
-      localStorage.setItem("admin_token", token);
-    }
-  }
+  patch: <T>(endpoint: string, data?: unknown) =>
+    request<T>(endpoint, { method: "PATCH", data }),
 
-  private getHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+  delete: <T>(endpoint: string) =>
+    request<T>(endpoint, { method: "DELETE" }),
 
-    if (typeof window !== "undefined") {
-      this.token = localStorage.getItem("admin_token");
-    }
+  // FormData upload — token is attached by the request interceptor
+  upload: async <T>(endpoint: string, formData: FormData): Promise<T> => {
+    const response = await apiClient.post<T>(endpoint, formData);
+    return response.data;
+  },
+};
 
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`;
-    }
-
-    return headers;
-  }
-
-  async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
-    const headers = { ...this.getHeaders(), ...options.headers };
-
-    const config: RequestInit = {
-      ...options,
-      headers,
-    };
-
-    try {
-      const response = await fetch(url, config);
-
-      if (response.status === 401) {
-        this.token = null;
-        localStorage.removeItem("admin_token");
-        throw new Error("Unauthorized. Please login again.");
-      }
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || `HTTP ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error(`API Error: ${endpoint}`, error);
-      throw error;
-    }
-  }
-
-  get<T>(endpoint: string, options?: ApiRequestOptions) {
-    return this.request<T>(endpoint, { ...options, method: "GET" });
-  }
-
-  post<T>(endpoint: string, body?: any, options?: ApiRequestOptions) {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  put<T>(endpoint: string, body?: any, options?: ApiRequestOptions) {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: "PUT",
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  delete<T>(endpoint: string, options?: ApiRequestOptions) {
-    return this.request<T>(endpoint, { ...options, method: "DELETE" });
-  }
-
-  setAuthToken(token: string) {
-    this.setToken(token);
-  }
-
-  clearAuth() {
-    this.token = null;
-    localStorage.removeItem("admin_token");
-  }
-}
-
-export const apiService = new ApiService();
+// ── Legacy apiService shim (keeps backward compatibility) ────────────────────
+// All methods now delegate to adminApi so the axios interceptor always runs
+export const apiService = {
+  get: <T>(endpoint: string) => adminApi.get<T>(endpoint),
+  post: <T>(endpoint: string, body?: unknown) => adminApi.post<T>(endpoint, body),
+  put: <T>(endpoint: string, body?: unknown) => adminApi.put<T>(endpoint, body),
+  delete: <T>(endpoint: string) => adminApi.delete<T>(endpoint),
+  setAuthToken: (token: string) => setAdminToken(token),
+  clearAuth: () => clearAdminToken(),
+};

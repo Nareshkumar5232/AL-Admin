@@ -1,24 +1,33 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/lib/validations';
 import { useAuthStore } from '@/store/authStore';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, ShieldAlert } from 'lucide-react';
 import { z } from 'zod';
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+// ── Inner component that uses useSearchParams (must be inside Suspense) ──────
+function LoginForm() {
   const { login, isAuthenticated } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Show session expired message when redirected by the 401 interceptor
+  useEffect(() => {
+    if (searchParams.get('reason') === 'session_expired') {
+      setError('Session expired. Please login again.');
+    }
+  }, [searchParams]);
 
   const {
     register,
@@ -42,22 +51,19 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
-    
-    // Simulate minor network delay for premium feel (cyber security check)
-    await new Promise((resolve) => setTimeout(resolve, 1200));
 
     const success = await login(data.email, data.password);
-    
+
     if (success) {
       router.replace('/dashboard');
     } else {
-      setError('Invalid system credentials. Access denied.');
+      setError('Invalid credentials. Access denied. Check email and password.');
       setIsLoading(false);
     }
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#0F0F0F]"
       style={{ background: 'radial-gradient(circle at center, #151a10 0%, #0c0f09 60%, #000000 100%)' }}
     >
@@ -190,7 +196,7 @@ export default function LoginPage() {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
-                  <span>Decrypting...</span>
+                  <span>Authenticating...</span>
                 </div>
               ) : (
                 'Access Dashboard'
@@ -206,5 +212,23 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+// ── Page export — wraps LoginForm in Suspense (required for useSearchParams) ──
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          className="min-h-screen flex items-center justify-center"
+          style={{ background: 'radial-gradient(circle at center, #151a10 0%, #0c0f09 60%, #000000 100%)' }}
+        >
+          <div className="w-8 h-8 rounded-full border-2 border-[#9EFF00] border-t-transparent animate-spin" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

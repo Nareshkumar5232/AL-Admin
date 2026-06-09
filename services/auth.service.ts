@@ -1,8 +1,8 @@
 // AL HIKMATH ENTERPRISES PVT LTD - Authentication Service
-// Handles all authentication-related API calls
+// POST /api/admin/login → stores JWT as "admin_token" in localStorage
 
-import { apiService } from './api';
-import { AdminUser } from '@/types';
+import { apiClient, setAdminToken, clearAdminToken, API_BASE_URL } from "./api";
+import type { AdminUser } from "@/types";
 
 export interface LoginResponse {
   token: string;
@@ -10,49 +10,66 @@ export interface LoginResponse {
 }
 
 export const authService = {
-  // POST /api/admin/login
+  /**
+   * POST /api/admin/login
+   * Sends credentials, extracts token from response, stores it.
+   * The backend returns: { token: "eyJ...", user: { ... } }
+   */
   async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await apiService.post<LoginResponse>('/admin/login', {
+    console.log("[AdminAuth] Attempting login for:", email);
+
+    // Use a raw axios call so we can inspect the full response structure
+    const response = await apiClient.post<LoginResponse>("/admin/login", {
       email,
       password,
     });
 
-    // Store token for future requests
-    if (response.token) {
-      apiService.setAuthToken(response.token);
+    const data = response.data;
+    console.log("[AdminAuth] Login response keys:", Object.keys(data));
+
+    // Extract token — handle both { token } and { data: { token } } shapes
+    const token: string =
+      (data as any).token ||
+      (data as any).accessToken ||
+      (data as any).jwt ||
+      (data as any).data?.token ||
+      "";
+
+    if (!token) {
+      console.error("[AdminAuth] ❌ No token found in login response:", data);
+      throw new Error("Authentication failed: no token in response");
     }
 
-    return response;
+    // Store token so every subsequent request carries it
+    setAdminToken(token);
+    console.log("[AdminAuth] ✅ Token stored successfully");
+
+    // Extract user — handle both { user } and flat shapes
+    const user: AdminUser =
+      (data as any).user ||
+      (data as any).admin ||
+      (data as any).data?.user ||
+      { id: "admin", name: "Admin", email, role: "Super Admin" };
+
+    return { token, user };
   },
 
-  // POST /api/admin/logout
+  /** POST /api/admin/logout */
   async logout(): Promise<{ success: boolean }> {
     try {
-      await apiService.post('/admin/logout', {});
-      apiService.clearAuth();
-      return { success: true };
+      await apiClient.post("/admin/logout");
     } catch {
-      // Clear auth even if logout fails
-      apiService.clearAuth();
-      return { success: true };
+      // Swallow — clear locally regardless
+    } finally {
+      clearAdminToken();
+      console.log("[AdminAuth] Logged out, token cleared");
     }
+    return { success: true };
   },
 
-  // GET /api/admin/profile
+  /** GET /api/admin/profile */
   async getProfile(): Promise<AdminUser> {
-    return apiService.get<AdminUser>('/admin/profile');
-  },
-
-  // PUT /api/admin/profile
-  async updateProfile(profileData: Partial<AdminUser>): Promise<AdminUser> {
-    return apiService.put<AdminUser>('/admin/profile', profileData);
-  },
-
-  // POST /api/admin/change-password
-  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean }> {
-    return apiService.post('/admin/change-password', {
-      currentPassword,
-      newPassword,
-    });
+    const response = await apiClient.get<AdminUser>("/admin/profile");
+    return response.data;
   },
 };

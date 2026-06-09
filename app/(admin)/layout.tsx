@@ -9,14 +9,17 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, restoreSession } = useAuthStore();
   const { isCollapsed } = useSidebarStore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Restore token to localStorage if Zustand hydrated from persisted state
+    restoreSession();
     setMounted(true);
   }, []);
+
 
   useEffect(() => {
     if (mounted && !isAuthenticated) {
