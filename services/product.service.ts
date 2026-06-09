@@ -66,7 +66,7 @@ export const productService = {
   async uploadProductImages(productId: string, files: File[]): Promise<{ images: string[] }> {
     const formData = new FormData();
     formData.append("productId", productId);
-    files.forEach((file) => formData.append("files", file));
+    files.forEach((file) => formData.append("images", file));
     // adminApi.upload uses the axios instance — token is auto-attached by interceptor
     return adminApi.upload<{ images: string[] }>("/admin/products/upload-images", formData);
   },
