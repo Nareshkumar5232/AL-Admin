@@ -75,6 +75,10 @@ class ApiService {
       "Content-Type": "application/json",
     };
 
+    if (typeof window !== "undefined") {
+      this.token = localStorage.getItem("admin_token");
+    }
+
     if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
     }

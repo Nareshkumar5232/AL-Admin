@@ -16,11 +16,11 @@ export interface StoreSettings {
 export const settingsService = {
   // GET /api/settings
   async getSettings(): Promise<StoreSettings> {
-    return apiService.get<StoreSettings>('/settings');
+    return apiService.get<StoreSettings>('/admin/settings');
   },
 
   // PUT /api/settings
   async updateSettings(settings: Partial<StoreSettings>): Promise<StoreSettings> {
-    return apiService.put<StoreSettings>('/settings', settings);
+    return apiService.put<StoreSettings>('/admin/settings', settings);
   },
 };

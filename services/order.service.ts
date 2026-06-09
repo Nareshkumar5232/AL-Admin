@@ -17,32 +17,32 @@ export const orderService = {
     if (filters?.search) params.append('search', filters.search);
 
     const query = params.toString();
-    const endpoint = query ? `/orders?${query}` : '/orders';
+    const endpoint = query ? `/admin/orders?${query}` : '/admin/orders';
     return apiService.get<Order[]>(endpoint);
   },
 
   // GET /api/orders/:id
   async getOrder(id: string): Promise<Order> {
-    return apiService.get<Order>(`/orders/${id}`);
+    return apiService.get<Order>(`/admin/orders/${id}`);
   },
 
   // POST /api/orders
   async createOrder(orderData: Partial<Order>): Promise<Order> {
-    return apiService.post<Order>('/orders', orderData);
+    return apiService.post<Order>('/admin/orders', orderData);
   },
 
   // PUT /api/orders/:id/status
   async updateOrderStatus(id: string, status: OrderStatus): Promise<Order> {
-    return apiService.put<Order>(`/orders/${id}/status`, { status });
+    return apiService.put<Order>(`/admin/orders/${id}/status`, { status });
   },
 
   // PUT /api/orders/:id
   async updateOrder(id: string, orderData: Partial<Order>): Promise<Order> {
-    return apiService.put<Order>(`/orders/${id}`, orderData);
+    return apiService.put<Order>(`/admin/orders/${id}`, orderData);
   },
 
   // DELETE /api/orders/:id
   async deleteOrder(id: string): Promise<{ success: boolean }> {
-    return apiService.delete(`/orders/${id}`);
+    return apiService.delete(`/admin/orders/${id}`);
   },
 };

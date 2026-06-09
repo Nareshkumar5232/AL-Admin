@@ -11,6 +11,17 @@ import ProductForm from '@/components/products/ProductForm';
 import ProductFilters from '@/components/products/ProductFilters';
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts';
 import { formatCurrency, getCategoryLabel } from '@/lib/utils';
+import { productService } from '@/services/product.service';
+
+function getAbsoluteImageUrl(img: any): string {
+  if (!img) return '/images/placeholder-product.svg';
+  const url = typeof img === 'object' && img !== null ? img.url : img;
+  if (!url) return '/images/placeholder-product.svg';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  return `https://al-kimath-backend.onrender.com${cleanUrl}`;
+}
 import { Plus, Edit, Trash2, Box, Package, ShieldCheck } from 'lucide-react';
 import { Product } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -134,18 +145,27 @@ export default function ProductsPage() {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   // Handlers
-  const handleSaveProduct = async (productData: Partial<Product>) => {
+  const handleSaveProduct = async (productData: Partial<Product>, newImageFiles?: File[]) => {
     try {
+      let savedProduct: Product;
       if (editingProduct) {
-        await updateProductMutation.mutateAsync({ id: editingProduct.id, data: productData });
+        savedProduct = await updateProductMutation.mutateAsync({ id: editingProduct.id, data: productData });
         showToast(`Product "${productData.name}" updated successfully.`);
       } else {
-        await createProductMutation.mutateAsync(productData);
+        savedProduct = await createProductMutation.mutateAsync(productData);
         showToast(`Product "${productData.name}" provisioned successfully.`);
       }
+
+      // Upload new files if any are selected
+      if (newImageFiles && newImageFiles.length > 0 && savedProduct?.id) {
+        await productService.uploadProductImages(savedProduct.id, newImageFiles);
+        showToast(`Product images uploaded successfully.`);
+      }
+
       setIsFormOpen(false);
       setEditingProduct(null);
     } catch (error) {
+      console.error('Save product failed:', error);
       showToast('Operation failed. Please try again.', 'error');
     }
   };
@@ -258,8 +278,8 @@ export default function ProductsPage() {
             <td>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                  {product.images && product.images.length > 0 && product.images[0] !== '/images/placeholder-product.svg' ? (
-                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                  {product.images && product.images.length > 0 ? (
+                    <img src={getAbsoluteImageUrl(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
                   ) : (
                     <Box size={20} className="text-gray-400" />
                   )}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2, ShieldAlert, Upload } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -24,18 +24,29 @@ const productSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
+function getAbsoluteImageUrl(img: any): string {
+  if (!img) return '/images/placeholder-product.svg';
+  const url = typeof img === 'object' && img !== null ? img.url : img;
+  if (!url) return '/images/placeholder-product.svg';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  return `https://al-kimath-backend.onrender.com${cleanUrl}`;
+}
+
 interface ProductFormProps {
   isOpen: boolean;
   onClose: () => void;
   product?: Product | null;
-  onSave: (productData: Partial<Product>) => void;
+  onSave: (productData: Partial<Product>, newImageFiles?: File[]) => void;
   isSaving?: boolean;
 }
 
 export default function ProductForm({ isOpen, onClose, product, onSave, isSaving }: ProductFormProps) {
   const { categories } = useCategoryStore();
   const [specs, setSpecs] = useState<{ key: string; value: string }[]>([]);
-  const [imagesList, setImagesList] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<any[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const isEdit = !!product;
 
   const {
@@ -86,7 +97,8 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
       } else {
         setSpecs([]);
       }
-      setImagesList(product.images || []);
+      setExistingImages(product.images || []);
+      setNewImageFiles([]);
     } else {
       reset({
         name: '',
@@ -101,7 +113,8 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
         tags: '',
       });
       setSpecs([]);
-      setImagesList([]);
+      setExistingImages([]);
+      setNewImageFiles([]);
     }
   }, [product, reset, isOpen]);
 
@@ -134,25 +147,41 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      const readPromises = filesArray.map((file) => {
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            resolve(reader.result as string);
-          };
-          reader.readAsDataURL(file);
-        });
-      });
-
-      Promise.all(readPromises).then((base64Images) => {
-        setImagesList((prev) => [...prev, ...base64Images]);
-      });
+      setNewImageFiles((prev) => [...prev, ...filesArray]);
     }
   };
 
-  const removeImage = (index: number) => {
-    setImagesList((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = (item: { type: 'existing' | 'new'; originalIndex: number }) => {
+    if (item.type === 'existing') {
+      setExistingImages((prev) => prev.filter((_, idx) => idx !== item.originalIndex));
+    } else {
+      setNewImageFiles((prev) => prev.filter((_, idx) => idx !== item.originalIndex));
+    }
   };
+
+  const previews = useMemo(() => {
+    const list: { type: 'existing' | 'new'; key: string; src: string; originalIndex: number }[] = [];
+    
+    existingImages.forEach((img, idx) => {
+      list.push({
+        type: 'existing',
+        key: `existing-${idx}`,
+        src: getAbsoluteImageUrl(img),
+        originalIndex: idx,
+      });
+    });
+
+    newImageFiles.forEach((file, idx) => {
+      list.push({
+        type: 'new',
+        key: `new-${idx}`,
+        src: URL.createObjectURL(file),
+        originalIndex: idx,
+      });
+    });
+
+    return list;
+  }, [existingImages, newImageFiles]);
 
   const onSubmit = (data: ProductFormValues) => {
     // Process specifications list back into record
@@ -167,13 +196,16 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
       ? data.tags.split(',').map(t => t.trim()).filter(Boolean) 
       : [];
 
-    onSave({
-      ...data,
-      category: data.category as ProductCategory,
-      specifications: specRecord,
-      tags: tagsArray,
-      images: imagesList.length > 0 ? imagesList : ['/images/placeholder-product.svg'],
-    });
+    onSave(
+      {
+        ...data,
+        category: data.category as ProductCategory,
+        specifications: specRecord,
+        tags: tagsArray,
+        images: existingImages,
+      },
+      newImageFiles
+    );
     
     onClose();
   };
@@ -364,16 +396,16 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
                 </div>
 
                 <div className="flex flex-wrap gap-4 items-center">
-                  {imagesList.map((img, index) => (
-                    <div key={index} className="w-24 h-24 rounded-xl border relative group overflow-hidden bg-white/5 flex items-center justify-center animate-scale-in" style={{ borderColor: 'var(--border-color)' }}>
+                  {previews.map((item, index) => (
+                    <div key={item.key} className="w-24 h-24 rounded-xl border relative group overflow-hidden bg-white/5 flex items-center justify-center animate-scale-in" style={{ borderColor: 'var(--border-color)' }}>
                       <img 
-                        src={img} 
+                        src={item.src} 
                         alt={`Product ${index + 1}`} 
                         className="w-full h-full object-contain p-1"
                       />
                       <button
                         type="button"
-                        onClick={() => removeImage(index)}
+                        onClick={() => removeImage(item)}
                         className="absolute top-1 right-1 p-1 rounded-md bg-red-500 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
                       >
                         <X size={12} />
