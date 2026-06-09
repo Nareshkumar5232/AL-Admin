@@ -134,14 +134,37 @@ export default function ProductsPage() {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   // Handlers
-  const handleSaveProduct = async (productData: Partial<Product>) => {
+  const handleSaveProduct = async (productData: Partial<Product>, newFiles: File[] = []) => {
     try {
-      if (editingProduct) {
-        await updateProductMutation.mutateAsync({ id: editingProduct.id, data: productData });
-        showToast(`Product "${productData.name}" updated successfully.`);
+      let productId = editingProduct?.id;
+      let isSuccess = false;
+
+      if (editingProduct && productId) {
+        await updateProductMutation.mutateAsync({ id: productId, data: productData });
+        isSuccess = true;
       } else {
-        await createProductMutation.mutateAsync(productData);
-        showToast(`Product "${productData.name}" provisioned successfully.`);
+        const result = await createProductMutation.mutateAsync(productData);
+        if (result && result.id) {
+          productId = result.id;
+        }
+        isSuccess = true;
+      }
+
+      if (isSuccess && productId && newFiles.length > 0) {
+        try {
+          // Import productService dynamically or use it if available
+          const { productService } = await import('@/services/product.service');
+          await productService.uploadProductImages(productId, newFiles);
+          // Refetch to get the updated images list
+          updateProductMutation.mutateAsync({ id: productId, data: {} }); // empty update to trigger refetch via invalidateQueries
+        } catch (uploadError) {
+          console.error("Failed to upload images:", uploadError);
+          showToast('Product saved but failed to upload some images.', 'error');
+        }
+      }
+
+      if (isSuccess) {
+        showToast(`Product "${productData.name}" ${editingProduct ? 'updated' : 'provisioned'} successfully.`);
       }
       setIsFormOpen(false);
       setEditingProduct(null);

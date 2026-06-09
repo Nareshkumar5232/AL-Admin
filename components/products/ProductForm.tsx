@@ -36,6 +36,7 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
   const { categories } = useCategoryStore();
   const [specs, setSpecs] = useState<{ key: string; value: string }[]>([]);
   const [imagesList, setImagesList] = useState<string[]>([]);
+  const [newFiles, setNewFiles] = useState<{file: File, preview: string}[]>([]);
   const isEdit = !!product;
 
   const {
@@ -87,6 +88,7 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
         setSpecs([]);
       }
       setImagesList(product.images || []);
+      setNewFiles([]);
     } else {
       reset({
         name: '',
@@ -102,6 +104,7 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
       });
       setSpecs([]);
       setImagesList([]);
+      setNewFiles([]);
     }
   }, [product, reset, isOpen]);
 
@@ -134,24 +137,22 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      const readPromises = filesArray.map((file) => {
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            resolve(reader.result as string);
-          };
-          reader.readAsDataURL(file);
-        });
-      });
-
-      Promise.all(readPromises).then((base64Images) => {
-        setImagesList((prev) => [...prev, ...base64Images]);
-      });
+      const filesWithPreviews = filesArray.map(file => ({
+        file,
+        preview: URL.createObjectURL(file)
+      }));
+      setNewFiles(prev => [...prev, ...filesWithPreviews]);
     }
   };
 
   const removeImage = (index: number) => {
-    setImagesList((prev) => prev.filter((_, i) => i !== index));
+    // Determine if it's an existing image or a new file
+    if (index < imagesList.length) {
+      setImagesList(prev => prev.filter((_, i) => i !== index));
+    } else {
+      const newFileIndex = index - imagesList.length;
+      setNewFiles(prev => prev.filter((_, i) => i !== newFileIndex));
+    }
   };
 
   const onSubmit = (data: ProductFormValues) => {
@@ -167,13 +168,15 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
       ? data.tags.split(',').map(t => t.trim()).filter(Boolean) 
       : [];
 
+    const filesToUpload = newFiles.map(f => f.file);
+
     onSave({
       ...data,
       category: data.category as ProductCategory,
       specifications: specRecord,
       tags: tagsArray,
-      images: imagesList.length > 0 ? imagesList : ['/images/placeholder-product.svg'],
-    });
+      images: imagesList,
+    }, filesToUpload);
     
     onClose();
   };
@@ -364,8 +367,9 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
                 </div>
 
                 <div className="flex flex-wrap gap-4 items-center">
+                  {/* Existing Images */}
                   {imagesList.map((img, index) => (
-                    <div key={index} className="w-24 h-24 rounded-xl border relative group overflow-hidden bg-white/5 flex items-center justify-center animate-scale-in" style={{ borderColor: 'var(--border-color)' }}>
+                    <div key={`existing-${index}`} className="w-24 h-24 rounded-xl border relative group overflow-hidden bg-white/5 flex items-center justify-center animate-scale-in" style={{ borderColor: 'var(--border-color)' }}>
                       <img 
                         src={img} 
                         alt={`Product ${index + 1}`} 
@@ -383,6 +387,30 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
                       </div>
                     </div>
                   ))}
+
+                  {/* New Files Preview */}
+                  {newFiles.map((fileData, index) => {
+                    const globalIndex = imagesList.length + index;
+                    return (
+                      <div key={`new-${index}`} className="w-24 h-24 rounded-xl border relative group overflow-hidden bg-white/5 flex items-center justify-center animate-scale-in" style={{ borderColor: 'var(--border-color)' }}>
+                        <img 
+                          src={fileData.preview} 
+                          alt={`New Product ${index + 1}`} 
+                          className="w-full h-full object-contain p-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(globalIndex)}
+                          className="absolute top-1 right-1 p-1 rounded-md bg-red-500 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
+                        >
+                          <X size={12} />
+                        </button>
+                        <div className="absolute bottom-0 left-0 right-0 bg-blue-500/80 py-0.5 text-center text-[8px] text-white font-bold uppercase tracking-wider">
+                          New
+                        </div>
+                      </div>
+                    );
+                  })}
 
                   {/* Add Image Button */}
                   <label 
