@@ -30,8 +30,9 @@ export function setAdminToken(token: string): void {
 
 export function clearAdminToken(): void {
   if (typeof window === "undefined") return;
-  console.log("[AdminAuth] Token cleared from localStorage");
+  console.log("[AdminAuth] Token and Zustand persistent store cleared from localStorage");
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("al-hikmath-admin-auth");
 }
 
 // ── Axios instance ───────────────────────────────────────────────────────────
