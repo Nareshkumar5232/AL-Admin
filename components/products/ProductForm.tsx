@@ -13,9 +13,18 @@ const productSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Please select a category'),
-  price: z.coerce.number().min(1, 'Price must be greater than 0'),
-  originalPrice: z.coerce.number().optional(),
-  stock: z.coerce.number().min(0, 'Stock cannot be negative'),
+  price: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
+    z.number().min(1, 'Price must be greater than 0')
+  ),
+  originalPrice: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
+    z.number().optional()
+  ),
+  stock: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null ? 0 : Number(val)),
+    z.number().min(0, 'Stock cannot be negative')
+  ),
   brand: z.string().min(1, 'Brand is required'),
   status: z.enum(['active', 'inactive']),
   isFeatured: z.boolean(),
@@ -196,14 +205,19 @@ export default function ProductForm({ isOpen, onClose, product, onSave, isSaving
       ? data.tags.split(',').map(t => t.trim()).filter(Boolean) 
       : [];
 
+    const finalImages = (existingImages.length === 0 && (!newImageFiles || newImageFiles.length === 0))
+      ? ['/images/placeholder-product.svg']
+      : existingImages;
+
     onSave(
       {
         ...data,
+        featured: data.isFeatured, // Map to featured key for backend schema compatibility
         category: data.category as ProductCategory,
         specifications: specRecord,
         tags: tagsArray,
-        images: existingImages,
-      },
+        images: finalImages,
+      } as any,
       newImageFiles
     );
     
