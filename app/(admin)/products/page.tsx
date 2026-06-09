@@ -97,9 +97,11 @@ export default function ProductsPage() {
       const q = searchQuery.toLowerCase();
       result = result.filter(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.brand.toLowerCase().includes(q) ||
-          p.id.toLowerCase().includes(q)
+          p && (
+            (p.name || '').toLowerCase().includes(q) ||
+            (p.brand || '').toLowerCase().includes(q) ||
+            (p.id || '').toLowerCase().includes(q)
+          )
       );
     }
 
