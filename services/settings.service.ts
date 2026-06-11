@@ -6,12 +6,12 @@ import { apiService } from './api';
 export interface StoreSettings {
   storeName: string;
   storeAddress: string;
-  storePhone1: string;
-  storePhone2?: string;
-  gstin: string;
+  phone1: string;
+  phone2?: string;
+  taxId: string;
   email?: string;
   website?: string;
-  shippingFee?: number;
+  shippingCost?: number;
 }
 
 export const settingsService = {

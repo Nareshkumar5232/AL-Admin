@@ -70,10 +70,10 @@ export default function SettingsPage() {
         if (settings) {
           if (settings.storeName) setStoreName(settings.storeName);
           if (settings.storeAddress) setStoreAddress(settings.storeAddress);
-          if (settings.storePhone1) setStorePhone(settings.storePhone1);
-          if (settings.storePhone2) setStorePhone2(settings.storePhone2);
-          if (settings.gstin) setStoreTaxInfo(settings.gstin);
-          if (settings.shippingFee !== undefined) setStoreShippingFee(settings.shippingFee);
+          if (settings.phone1) setStorePhone(settings.phone1);
+          if (settings.phone2) setStorePhone2(settings.phone2);
+          if (settings.taxId) setStoreTaxInfo(settings.taxId);
+          if (settings.shippingCost !== undefined) setStoreShippingFee(settings.shippingCost);
         }
       } catch (error) {
         console.error('Failed to fetch store settings:', error);
@@ -128,10 +128,10 @@ export default function SettingsPage() {
       await settingsService.updateSettings({
         storeName,
         storeAddress,
-        storePhone1: storePhone,
-        storePhone2: storePhone2 || '',
-        gstin: storeTaxInfo,
-        shippingFee: Number(storeShippingFee),
+        phone1: storePhone,
+        phone2: storePhone2 || '',
+        taxId: storeTaxInfo,
+        shippingCost: Number(storeShippingFee),
       });
       triggerToast('Store parameters sync completed successfully.');
     } catch (error) {
