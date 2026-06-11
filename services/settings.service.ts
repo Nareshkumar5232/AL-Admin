@@ -11,6 +11,7 @@ export interface StoreSettings {
   gstin: string;
   email?: string;
   website?: string;
+  shippingFee?: number;
 }
 
 export const settingsService = {

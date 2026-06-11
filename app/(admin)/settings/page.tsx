@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PageHeader from '@/components/shared/PageHeader';
+import { settingsService } from '@/services/settings.service';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useForm } from 'react-hook-form';
@@ -53,12 +54,33 @@ export default function SettingsPage() {
   const [profileEmail, setProfileEmail] = useState(user?.email || 'admin@gmail.com');
   const [profilePhone, setProfilePhone] = useState('+91 99999 88888');
 
-  // Store form state (mock saving)
+  // Store form state
   const [storeName, setStoreName] = useState('AL HIKMATH ENTERPRISES PVT LTD');
   const [storeAddress, setStoreAddress] = useState('No.16/127, Inbharajapuram 1st Street, Bajanai Kovil Street, Choolaimedu - 600094');
   const [storePhone, setStorePhone] = useState('+91 9342698344');
   const [storePhone2, setStorePhone2] = useState('+91 9342798344');
   const [storeTaxInfo, setStoreTaxInfo] = useState('GSTIN29AAAAA1111A1Z1');
+  const [storeShippingFee, setStoreShippingFee] = useState(0);
+
+  // Fetch store settings on mount
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const settings = await settingsService.getSettings();
+        if (settings) {
+          if (settings.storeName) setStoreName(settings.storeName);
+          if (settings.storeAddress) setStoreAddress(settings.storeAddress);
+          if (settings.storePhone1) setStorePhone(settings.storePhone1);
+          if (settings.storePhone2) setStorePhone2(settings.storePhone2);
+          if (settings.gstin) setStoreTaxInfo(settings.gstin);
+          if (settings.shippingFee !== undefined) setStoreShippingFee(settings.shippingFee);
+        }
+      } catch (error) {
+        console.error('Failed to fetch store settings:', error);
+      }
+    }
+    fetchSettings();
+  }, []);
 
   // Notifications state
   const [notifEmail, setNotifEmail] = useState(true);
@@ -100,9 +122,22 @@ export default function SettingsPage() {
     triggerToast('Profile parameters updated on admin database.');
   };
 
-  const handleStoreSave = (e: React.FormEvent) => {
+  const handleStoreSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    triggerToast('Store parameters sync completed successfully.');
+    try {
+      await settingsService.updateSettings({
+        storeName,
+        storeAddress,
+        storePhone1: storePhone,
+        storePhone2: storePhone2 || '',
+        gstin: storeTaxInfo,
+        shippingFee: Number(storeShippingFee),
+      });
+      triggerToast('Store parameters sync completed successfully.');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      triggerToast('Failed to save store parameters.');
+    }
   };
 
   const handleSecuritySave = (data: SecurityFormValues) => {
@@ -430,6 +465,17 @@ export default function SettingsPage() {
                         value={storeTaxInfo}
                         onChange={(e) => setStoreTaxInfo(e.target.value)}
                         className="admin-input font-mono uppercase"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase font-bold text-gray-400">Manual Shipping Fee (₹)</label>
+                      <input
+                        type="number"
+                        value={storeShippingFee}
+                        onChange={(e) => setStoreShippingFee(Number(e.target.value))}
+                        className="admin-input font-mono"
+                        min="0"
                       />
                     </div>
                   </div>
